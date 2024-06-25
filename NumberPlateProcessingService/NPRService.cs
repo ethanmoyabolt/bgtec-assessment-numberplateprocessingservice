@@ -25,6 +25,8 @@ namespace NumberPlateProcessingService
 
         protected override void OnStart(string[] args)
         {
+            // On start check the directory and process all files to check if any have been added while the service has been stopped
+
             string rootPath = @"C:\Users\ethan\OneDrive\Desktop\ACS Output Test";
             string[] dirs = Directory.GetFiles(rootPath);
 
@@ -32,6 +34,8 @@ namespace NumberPlateProcessingService
             {
                 ProcessFile(filepath);
             }
+
+            // Create a watcher to monitor when new files are added and to process them as soon as they are added.
 
             _watcher = new FileSystemWatcher
             {
@@ -71,6 +75,7 @@ namespace NumberPlateProcessingService
                 ImageFilename = splitFinalTwo[1]
             };
 
+            // Add any new files to the database.
             if (!context.PlateReads.Any(pr => pr.ImageFilename == plateRead.ImageFilename))
             {
                 context.PlateReads.Add(plateRead);

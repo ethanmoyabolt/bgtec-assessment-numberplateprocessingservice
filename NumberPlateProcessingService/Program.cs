@@ -15,6 +15,7 @@ namespace NumberPlateProcessingService
         /// </summary>
         static void Main()
         {
+            // Database is connected and context is created and passed to the service on start up.
             DbContextOptionsBuilder<PlateReadDbContext> options = new DbContextOptionsBuilder<PlateReadDbContext>();
             options.UseSqlServer("Server = (localdb)\\mssqllocaldb;Database = ANPR; MultipleActiveResultSets = true;Trusted_Connection=True");
             PlateReadDbContext ctx = new PlateReadDbContext(options.Options);

@@ -8,6 +8,8 @@ namespace NumberPlateProcessingService
 {
     public class PlateRead
     {
+        // PlateRead model to allow new plate reads to be added to the database.
+
         public Guid Id { get; set; }
         public string CountryOfVehicle { get; set; }
         public string RegNumber { get; set; }
