@@ -50,7 +50,7 @@ namespace NumberPlateProcessingService
 
         private void OnChanged(object sender, FileSystemEventArgs e)
         {
-            ProcessFile(@"NONE\r9112A\r77\rGIBEXIT2\20140827\1210/w27082014,12140198,9112A,77.jpg");
+            ProcessFile(e.FullPath);
         }
 
         protected override void OnStop()
@@ -62,26 +62,65 @@ namespace NumberPlateProcessingService
         {
             // Clean up data for processing
             string[] fields = Regex.Split(filePath, @"\\");
-            string[] splitFinalTwo = fields[fields.Length - 1].Split('/');
-
-            var plateRead = new PlateRead
+            if (fields.Length != 6)
             {
-                CountryOfVehicle = fields[0],
-                RegNumber = fields[1].Substring(1),
-                ConfidenceLevel = int.Parse(fields[2].Replace("r", "")),
-                CameraName = fields[3].Substring(1),
-                CaptureDate = DateTime.ParseExact(fields[4], "yyyyMMdd", null),
-                CaptureTime = TimeSpan.ParseExact(splitFinalTwo[0], "hhmm", null),
-                ImageFilename = splitFinalTwo[1]
-            };
-
-            // Add any new files to the database.
-            if (!context.PlateReads.Any(pr => pr.ImageFilename == plateRead.ImageFilename))
+                LogActions("Failed to log file in database, file was not in required format");
+            }
+            else
             {
-                context.PlateReads.Add(plateRead);
-                context.SaveChanges();
+                string[] splitFinalTwo = fields[fields.Length - 1].Split('/');
+
+                var plateRead = new PlateRead
+                {
+                    CountryOfVehicle = fields[0],
+                    RegNumber = fields[1].Substring(1),
+                    ConfidenceLevel = int.Parse(fields[2].Replace("r", "")),
+                    CameraName = fields[3].Substring(1),
+                    CaptureDate = DateTime.ParseExact(fields[4], "yyyyMMdd", null),
+                    CaptureTime = TimeSpan.ParseExact(splitFinalTwo[0], "hhmm", null),
+                    ImageFilename = splitFinalTwo[1]
+                };
+
+                // Add any new files to the database.
+                // We check to see that there are no cameras with the same filename and camera
+                if (!context.PlateReads.Any(pr => pr.ImageFilename == plateRead.ImageFilename)
+                    && !context.PlateReads.Any(pr => pr.CameraName == plateRead.CameraName))
+                {
+                    context.PlateReads.Add(plateRead);
+                    context.SaveChanges();
+                    LogActions($"File {filePath} has been logged in the database");
+                }
+                else
+                {
+                    LogActions($"File {filePath} is already present in the database");
+                }
             }
 
+        }
+
+        // Log Actions in log file
+        private void LogActions(string message)
+        {
+            string path = AppDomain.CurrentDomain.BaseDirectory + "\\Logs";
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            string filepath = AppDomain.CurrentDomain.BaseDirectory + "\\Logs\\ServiceLog_" + DateTime.Now.Date;
+            if (!File.Exists(filepath))
+            {
+                using (StreamWriter sw = File.CreateText(filepath))
+                {
+                    sw.WriteLine(message);
+                }
+            }
+            else
+            {
+                using (StreamWriter sw = File.CreateText(filepath))
+                {
+                    sw.WriteLine(message);
+                }
+            }
         }
     }
 }
